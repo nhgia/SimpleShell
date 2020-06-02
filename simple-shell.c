@@ -5,7 +5,7 @@
  **/
 
 
-#include <stdio.h>
+include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -15,9 +15,9 @@
 int main(void) {
 
 	char command[MAX_LENGTH];
-
+	char prevCommand[MAX_LENGTH];
 	char *args[MAX_LENGTH/2 + 1]; // MAximum 40 argments
-
+	prevCommand[0] = '\0';
 	int should_run = 1;
 
 	while (should_run) {
@@ -30,9 +30,18 @@ int main(void) {
 		}
 		else if (strcmp(command, "\n") == 0)
 		{
-			printf("EMPTY\n");
 			continue;
 		}
+		else if (strcmp(command, "!!\n") == 0)
+		{
+			if (strcmp(prevCommand, "") == 0)
+			{
+				printf("NO_PREVIOUS_COMMAND\n");
+				continue;
+			}
+			strncpy(command, prevCommand, strlen(prevCommand) + 1);
+		}
+		strncpy(prevCommand, command, strlen(command) + 1);
 		//Parse command and arguments.
 		
 		//If command contains output redirection argument
