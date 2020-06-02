@@ -7,6 +7,8 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define MAX_LENGTH 80 // The maximum length of the commands
 
@@ -22,7 +24,15 @@ int main(void) {
 		printf("ssh>>");
 		fflush(stdout);
 		fgets(command, MAX_LENGTH, stdin);
-		
+		if (strcmp(command, "exit\n") == 0)
+		{
+			break;
+		}
+		else if (strcmp(command, "\n") == 0)
+		{
+			printf("EMPTY\n");
+			continue;
+		}
 		//Parse command and arguments.
 		
 		//If command contains output redirection argument
