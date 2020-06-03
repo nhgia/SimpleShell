@@ -9,8 +9,51 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define MAX_LENGTH 80 // The maximum length of the commands
+
+void parse(char *command, char **args)
+{
+	while (*command !='\0') //if not the end of line, continue
+	{
+		while(*command == ' ' || *command == '\t' || *command == '\n')
+		{
+			*command++ = '\0'; //replace white spaces with 0
+		}
+		*args++ = command;
+		while (*command != '\0' && *command != ' ' && *command != '\t' && *command != '\n')
+		{
+			command++;
+		}
+		*args = '\0'; //mark the end of argument list
+	}
+}
+
+void execute(char **args)
+{
+	pid_t pid;
+	int status;
+	
+	if ((pid = fork()) < 0)
+	{
+		printf("*** ERROR: forking child process failed\n");
+		exit(1);
+	}
+	else if (pid == 0)
+	{
+		if (execvp(*args, args) < 0)
+		{
+			printf("*** ERROR: Exec failed\n");
+			exit(1);
+		}
+	}
+	else {
+		while (wait(&status) != pid)
+			printf("...\n");
+	}
+}
 
 int main(void) {
 
@@ -19,20 +62,13 @@ int main(void) {
 	char *args[MAX_LENGTH/2 + 1]; // MAximum 40 argments
 	prevCommand[0] = '\0';
 	int should_run = 1;
-
 	while (should_run) {
 		printf("ssh>>");
 		fflush(stdout);
 		fgets(command, MAX_LENGTH, stdin);
 		command[strlen(command)-1] = '\0';
-		if (strcmp(command, "exit") == 0)
-		{
-			break;
-		}
-		else if (strcmp(command, "") == 0)
-		{
+		if (strcmp(command, "") == 0)
 			continue;
-		}
 		else if (strcmp(command, "!!") == 0)
 		{
 			if (strcmp(prevCommand, "") == 0)
@@ -42,21 +78,12 @@ int main(void) {
 			}
 			strncpy(command, prevCommand, strlen(prevCommand) + 1);
 		}
-		strncpy(prevCommand, command, strlen(command) + 1);
 		//Parse command and arguments.
-		const char s[2] = " ";
-		int count = 0;
-		char *token;
-		token = strtok(command, s);
-		while(token != NULL)
-		{
-			args[count++] = token;
-			token = strtok(NULL, s);
-		}
-		/*int c;
-		for(c=0; c < count; c++)
-			printf("%s\n", args[c]);
-		*/	
+		parse(command, args);
+		if (strcmp(args[0], "exit") == 0)
+			exit(0);
+		strncpy(prevCommand, command, strlen(command) + 1);
+		execute(args);
 		//If command contains output redirection argument
 		//	fork a child process invoking fork() system call and perform the followings in the child process:
 		//		open the redirected file in write only mode invoking open() system call
