@@ -24,26 +24,39 @@ int main(void) {
 		printf("ssh>>");
 		fflush(stdout);
 		fgets(command, MAX_LENGTH, stdin);
-		if (strcmp(command, "exit\n") == 0)
+		command[strlen(command)-1] = '\0';
+		if (strcmp(command, "exit") == 0)
 		{
 			break;
 		}
-		else if (strcmp(command, "\n") == 0)
+		else if (strcmp(command, "") == 0)
 		{
 			continue;
 		}
-		else if (strcmp(command, "!!\n") == 0)
+		else if (strcmp(command, "!!") == 0)
 		{
 			if (strcmp(prevCommand, "") == 0)
 			{
-				printf("NO_PREVIOUS_COMMAND\n");
+				printf("No commands in history\n");
 				continue;
 			}
 			strncpy(command, prevCommand, strlen(prevCommand) + 1);
 		}
 		strncpy(prevCommand, command, strlen(command) + 1);
 		//Parse command and arguments.
-		
+		const char s[2] = " ";
+		int count = 0;
+		char *token;
+		token = strtok(command, s);
+		while(token != NULL)
+		{
+			args[count++] = token;
+			token = strtok(NULL, s);
+		}
+		/*int c;
+		for(c=0; c < count; c++)
+			printf("%s\n", args[c]);
+		*/	
 		//If command contains output redirection argument
 		//	fork a child process invoking fork() system call and perform the followings in the child process:
 		//		open the redirected file in write only mode invoking open() system call
@@ -85,6 +98,6 @@ int main(void) {
 		//	If command does not conatain & (ampersand) at the end
 		//		invoke wait() system call in parent process.
 	}
-
 	return 0;
 }
+
