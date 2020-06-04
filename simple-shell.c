@@ -1,6 +1,6 @@
-/**********************************************************************************************************************************************************
+/***************************************************************
  * Simple UNIX Shell
- * @author: 
+ * @authors: Nguyen Hoang Gia (1751064) & Pham Bao Duy (1751065)
  * 
  **/
 
@@ -12,7 +12,45 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+// For clear screen
+#ifdef _WIN32
+#include <conio.h>
+#else
+#include <stdio.h>
+#define clrscr() printf("\e[1;1H\e[2J")
+#endif
+
 #define MAX_LENGTH 80 // The maximum length of the commands
+
+void init_shell() //Open when launch shell
+{ 
+    clrscr(); 
+    printf("\n============================================"); 
+    printf("\n|              SIMPLE SHELL                |"); 
+    printf("\n____________________________________________"); 
+	printf("\n|  Project 2 - CS333 Spring 2020           |"); 
+	printf("\n|  Authors: Nguyen Hoang Gia (1751064)     |"); 
+	printf("\n|           Pham Bao Duy     (1751063)     |"); 
+    printf("\n============================================"); 
+	printf("\n"); 
+    char* username = getenv("USER"); 
+    printf("\nHello @%s, type help for menu.", username); 
+    printf("\n\n"); 
+} 
+
+void help_panel() 
+{ 
+    puts("\n____________________________________________"
+		 "\n|________________HELP PANEL________________|"
+         "\n|__________________________________________|"
+         "\n| List of Commands supported:              |"
+         "\n|    >!!                                   |"
+         "\n|    >!!                                   |"
+         "\n|    >exit                                 |"
+         "\n|__________________________________________|\n"); 
+  
+    return; 
+} 
 
 void parse(char *command, char **args)
 {
@@ -62,6 +100,7 @@ int main(void) {
 	char *args[MAX_LENGTH/2 + 1]; // MAximum 40 argments
 	prevCommand[0] = '\0';
 	int should_run = 1;
+	init_shell();
 	while (should_run) {
 		printf("ssh>>");
 		fflush(stdout);
@@ -82,8 +121,12 @@ int main(void) {
 		parse(command, args);
 		if (strcmp(args[0], "exit") == 0)
 			exit(0);
-		strncpy(prevCommand, command, strlen(command) + 1);
-		execute(args);
+		else if (strcmp(args[0], "help") == 0)
+			help_panel();
+		else {
+			strncpy(prevCommand, command, strlen(command) + 1);
+			execute(args);
+		}
 		//If command contains output redirection argument
 		//	fork a child process invoking fork() system call and perform the followings in the child process:
 		//		open the redirected file in write only mode invoking open() system call
