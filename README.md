@@ -20,11 +20,36 @@ sudo apt-get install libreadline-dev
 ```
 - Change directory to the project folder.
 
-### Step 1: Compile the C file into output and runnable
+### Install: Compile the C file into output and runnable
 - Simply by running
 ```shell
 make
 ```
 
-### Step 2: (to be updated)
-(to be update)
+### Some commands for the SimpleShell that you can try
+List sub-folder & sub-item
+```bash
+ls
+```
+- Current directory
+```bash
+pwd
+```
+- Ping website
+```bash
+ping -i 5 -w 10 -W 10 google.com
+```
+- ...
+
+### Main feature
+#### Check history of run commands
+- Using double exclamation mark "!!" for checking history
+```bash
+!!
+```
+#### Concurrence commands
+- Add an ampersand mark after the command with whitespace required.
+```bash
+ping -i 5 -w 10 -W 10 google.com &
+```
+#### To be updated
