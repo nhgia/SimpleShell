@@ -16,18 +16,21 @@
 - Install essential components by running:
 ```shell
 sudo apt-get install build-essential
-sudo apt-get install libreadline-dev
 ```
 - Change directory to the project folder.
 
 ### Install: Compile the C file into output and runnable
-- Simply by running
+- Compile through Makefile, run
 ```shell
 make
 ```
+- Run the shell
+```shell
+./simple-shell
+```
 
 ### Some commands for the SimpleShell that you can try
-List sub-folder & sub-item
+- List sub-folder & sub-item
 ```bash
 ls
 ```

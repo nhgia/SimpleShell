@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+
 // For clear screen
 #ifdef _WIN32
 #include <conio.h>
@@ -43,9 +44,11 @@ void help_panel()
     puts("\n____________________________________________"
 		 "\n|________________HELP PANEL________________|"
          "\n|__________________________________________|"
-         "\n| List of Commands supported:              |"
+         "\n| Some commands supported:                 |"
          "\n|    >!!                                   |"
-         "\n|    >!!                                   |"
+         "\n|    >ls                                   |"
+		 "\n|    >pwd                                  |"
+		 "\n|    >ping                                 |"
          "\n|    >exit                                 |"
          "\n|__________________________________________|\n"); 
   
@@ -69,27 +72,143 @@ void parse(char *command, char **args)
 	}
 }
 
+int findAmpersand(char **args)
+{
+    //Find "&"
+    int count = 0;
+    while (strcmp(args[count], "&") != 0 && args[count] != NULL)
+        count++;
+    
+    if (args[count] != NULL)
+		//Found
+        return 1;
+    return 0;
+}
+
+int findPipe(char **args)
+{
+    //Find "|""
+    int count = 0;
+    while (strcmp(args[count], "|") != 0 && args[count] != NULL)
+        count++;
+    
+    if (args[count] != NULL)
+		//Found
+        return 1;
+    return 0;
+}
+
+void exec_w_Pipe(char** args) 
+{ 
+	if (findPipe(args) != 1) {
+		printf("\nPipe error."); 
+		return;
+	}
+	//Pre-process: Take argument before "|" and after.
+	char* parsed[MAX_LENGTH]; 
+	char* parsedpipe[MAX_LENGTH]; 
+
+	int countTemp = 0, foundPipe = 0, argLen = 0, pipeLen = 0;
+    while (args[countTemp] != NULL) {
+		if (strcmp(args[countTemp], "|") == 0)
+			foundPipe = 1;
+		if (foundPipe == 0) {
+			parsed[argLen] = args[countTemp];
+			argLen++;
+		}
+		else if (strcmp(args[countTemp], "|") != 0) {
+			parsedpipe[pipeLen] = args[countTemp];
+			pipeLen++;
+		};
+		countTemp++;
+	};
+        
+
+    // 0 is read end, 1 is write end 
+    int pipefd[2];  
+    pid_t pipe1, pipe2; 
+  
+    if (pipe(pipefd) < 0) { 
+        printf("\nInit error."); 
+        return; 
+    } 
+    pipe1 = fork(); 
+    if (pipe1 < 0) { 
+        printf("\nFork error."); 
+        return; 
+    } 
+  
+    if (pipe1 == 0) { 
+        // pipe1
+        // It only needs to write at the write end 
+        close(pipefd[0]); 
+        dup2(pipefd[1], STDOUT_FILENO); 
+        close(pipefd[1]); 
+  
+        if (execvp(parsed[0], parsed) < 0) { 
+            printf("\nCould not execute command 1.."); 
+            exit(0); 
+        } 
+    } else { 
+        // Parent executing 
+        pipe2 = fork(); 
+  
+        if (pipe2 < 0) { 
+            printf("\nCould not fork"); 
+            return; 
+        } 
+  
+        // Child 2 executing.. 
+        // It only needs to read at the read end 
+        if (pipe2 == 0) { 
+            close(pipefd[1]); 
+            dup2(pipefd[0], STDIN_FILENO); 
+            close(pipefd[0]); 
+            if (execvp(parsedpipe[0], parsedpipe) < 0) { 
+                printf("\nCould not execute command 2.."); 
+                exit(0); 
+            } 
+        } else { 
+            // parent executing, waiting for two children 
+            wait(NULL); 
+            wait(NULL); 
+        } 
+    } 
+} 
+
 void execute(char **args)
 {
 	pid_t pid;
 	int status;
-	
-	if ((pid = fork()) < 0)
-	{
-		printf("*** ERROR: forking child process failed\n");
-		exit(1);
+
+	if (findPipe(args) == 1) {
+		//Execute if find pipe
+		exec_w_Pipe(args);
 	}
-	else if (pid == 0)
+	else if (findAmpersand(args) == 1) {
+		//Execute concurrence
+	}
+	else
 	{
-		if (execvp(*args, args) < 0)
+		//Single command
+		if ((pid = fork()) < 0)
 		{
-			printf("*** ERROR: Exec failed\n");
+			printf("*** ERROR: forking child process failed\n");
 			exit(1);
 		}
-	}
-	else {
-		while (wait(&status) != pid)
-			printf("...\n");
+		else if (pid == 0)
+		{
+			if (execvp(*args, args) < 0)
+			{
+				printf("*** ERROR: Exec failed\n");
+				exit(1);
+			}
+		}
+		else
+		{
+			while (wait(&status) != pid)
+				printf("...\n");
+		}
 	}
 }
 
@@ -102,7 +221,7 @@ int main(void) {
 	int should_run = 1;
 	init_shell();
 	while (should_run) {
-		printf("ssh>>");
+		printf("ssh>> ");
 		fflush(stdout);
 		fgets(command, MAX_LENGTH, stdin);
 		command[strlen(command)-1] = '\0';
