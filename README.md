@@ -59,7 +59,11 @@ ping -i 5 -w 10 -W 10 google.com &
 ```
 
 #### 4. I/O redirection
-- To be updated
+- Redirect the output of a command to a file and input from a file to a command.
+```bash
+ls > myFile.txt
+cat < myFile.txt
+```
 
 #### 5. Communication via a Pipe
 - Output of one command to serve as input to another using a pipe.
