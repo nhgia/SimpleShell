@@ -29,7 +29,9 @@ make
 ./simple-shell
 ```
 
-### Some commands for the SimpleShell that you can try
+
+### SimpleShell commands and features
+#### 1. Single command
 - List sub-folder & sub-item
 ```bash
 ls
@@ -44,15 +46,24 @@ ping -i 5 -w 10 -W 10 google.com
 ```
 - ...
 
-### Main feature
-#### Check history of run commands
+#### 2. Check history of run commands
 - Using double exclamation mark "!!" for checking history
 ```bash
 !!
 ```
-#### Concurrence commands
+
+#### 3. Concurrence commands
 - Add an ampersand mark after the command with whitespace required.
 ```bash
 ping -i 5 -w 10 -W 10 google.com &
 ```
-#### To be updated
+
+#### 4. I/O redirection
+- To be updated
+
+#### 5. Communication via a Pipe
+- Output of one command to serve as input to another using a pipe.
+- For example: list sub-folder and sub-item in current directory, just display which has character "a" in the name.
+```bash
+ls | grep a
+```
