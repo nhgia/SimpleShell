@@ -76,7 +76,7 @@ int findAmpersand(char **args)
 {
     //Find "&"
     int count = 0;
-    while (strcmp(args[count], "&") != 0 && args[count] != NULL)
+    while (args[count] != NULL && strcmp(args[count], "&") != 0)
         count++;
     
     if (args[count] != NULL)
@@ -89,7 +89,7 @@ int findPipe(char **args)
 {
     //Find "|""
     int count = 0;
-    while (strcmp(args[count], "|") != 0 && args[count] != NULL)
+    while (args[count] != NULL && strcmp(args[count], "|") != 0)
         count++;
     
     if (args[count] != NULL)
@@ -181,11 +181,14 @@ void execute(char **args)
 	pid_t pid;
 	int status;
 
-	if (findPipe(args) == 1) {
+	int isPipe = findPipe(args);
+	int isConcurrence = findAmpersand(args);
+
+	if (isPipe == 1) {
 		//Execute if find pipe
 		exec_w_Pipe(args);
 	}
-	else if (findAmpersand(args) == 1) {
+	else if (isConcurrence == 1) {
 		//Execute concurrence
 	}
 	else
