@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <stdlib.h>
+#include <stdlib.h> //calloc
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -122,7 +122,12 @@ void exec_w_Pipe(char** args)
 		};
 		countTemp++;
 	};
-        
+    
+	parsed[argLen] = '\0';
+	parsedpipe[pipeLen] = '\0';
+
+	printf("\n%s",parsed);
+	printf("\n%s",parsedpipe);
 
     // 0 is read end, 1 is write end 
     int pipefd[2];  
