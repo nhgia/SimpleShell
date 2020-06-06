@@ -101,7 +101,7 @@ int findPipe(char **args)
 void exec_w_Pipe(char** args) 
 { 
 	if (findPipe(args) != 1) {
-		printf("\nPipe error."); 
+		printf("\n*** PIPE: error, doing nothing."); 
 		return;
 	}
 	//Pre-process: Take argument before "|" and after.
@@ -126,56 +126,53 @@ void exec_w_Pipe(char** args)
 	parsed[argLen] = '\0';
 	parsedpipe[pipeLen] = '\0';
 
-	printf("\n%s",parsed);
-	printf("\n%s",parsedpipe);
-
-    // 0 is read end, 1 is write end 
-    int pipefd[2];  
+    // Define:
+	// fd[0] is read end, fd[1] is write end
+    int fd[2];
     pid_t pipe1, pipe2; 
   
-    if (pipe(pipefd) < 0) { 
-        printf("\nInit error."); 
+    if (pipe(fd) < 0) { 
+        printf("\n*** PIPE: Init error."); 
         return; 
     } 
     pipe1 = fork(); 
     if (pipe1 < 0) { 
-        printf("\nFork error."); 
+        printf("\n*** PIPE: Fork error."); 
         return; 
     } 
   
     if (pipe1 == 0) { 
         // pipe1
-        // It only needs to write at the write end 
-        close(pipefd[0]); 
-        dup2(pipefd[1], STDOUT_FILENO); 
-        close(pipefd[1]); 
+        // write at fd[1] 
+        close(fd[0]); 
+        dup2(fd[1], STDOUT_FILENO); //duplicate
+        close(fd[1]); 
   
         if (execvp(parsed[0], parsed) < 0) { 
-            printf("\nCould not execute command 1.."); 
+            printf("\n*** PIPE: Error when executing command befor pipe."); 
             exit(0); 
         } 
     } else { 
-        // Parent executing 
+        // Parent execute 
         pipe2 = fork(); 
   
         if (pipe2 < 0) { 
-            printf("\nCould not fork"); 
+            printf("\n*** PIPE: Fork parent error"); 
             return; 
         } 
   
-        // Child 2 executing.. 
-        // It only needs to read at the read end 
+        // Child 2 execute.
+        // read at fd[0] 
         if (pipe2 == 0) { 
-            close(pipefd[1]); 
-            dup2(pipefd[0], STDIN_FILENO); 
-            close(pipefd[0]); 
+            close(fd[1]); 
+            dup2(fd[0], STDIN_FILENO); //duplicate
+            close(fd[0]); 
             if (execvp(parsedpipe[0], parsedpipe) < 0) { 
-                printf("\nCould not execute command 2.."); 
+                printf("\n*** PIPE: Error when executing command after pipe."); 
                 exit(0); 
             } 
         } else { 
             // parent executing, waiting for two children 
-            wait(NULL); 
             wait(NULL); 
         } 
     } 
@@ -254,46 +251,6 @@ int main(void) {
 			strncpy(prevCommand, command, strlen(command) + 1);
 			execute(args);
 		}
-		//If command contains output redirection argument
-		//	fork a child process invoking fork() system call and perform the followings in the child process:
-		//		open the redirected file in write only mode invoking open() system call
-		//		copy the opened file descriptor to standard output file descriptor (STDOUT_FILENO) invoking dup2() system call
-		//		close the opened file descriptor invoking close() system call
-		//		change the process image with the new process image according to the UNIX command using execvp() system call
-		//	If command does not conatain & (ampersand) at the end
-		//		invoke wait() system call in parent process.
-		//
-		//		
-		//If command contains input redirection argument
-		//	fork a child process invoking fork() system call and perform the followings in the child process:
-		//		open the redirected file in read  only mode invoking open() system call
-		//		copy the opened file descriptor to standard input file descriptor (STDIN_FILENO) invoking dup2() system call
-		//		close the opened file descriptor invoking close() system call
-		//		change the process image with the new process image according to the UNIX command using execvp() system call
-		//	If command does not conatain & (ampersand) at the end
-		//		invoke wait() system call in parent process.
-		//
-		//	
-		
-		//If command contains pipe argument
-		//	fork a child process invoking fork() system call and perform the followings in the child process:
-		//		create a pipe invoking pipe() system call
-		//		fork another child process invoking fork() system call and perform the followings in this child process:
-		//			close the write end descriptor of the pipe invoking close() system call
-		//			copy the read end  descriptor of the pipe to standard input file descriptor (STDIN_FILENO) invoking dup2() system call
-		//			change the process image of the this child with the new image according to the second UNIX command after the pipe symbol (|) using execvp() system call
-		//		close the read end descriptor of the pipe invoking close() system call
-		//		copy the write end descriptor of the pipe to standard output file descriptor (STDOUT_FILENO) invoking dup2() system call
-		//		change the process image with the new process image according to the first UNIX command before the pipe symbol (|) using execvp() system call
-		//	If command does not conatain & (ampersand) at the end
-		//		invoke wait() system call in parent process.
-		//
-		//
-		//If command does not contain any of the above
-		//	fork a child process using fork() system call and perform the followings in the child process.
-		//		change the process image with the new process image according to the UNIX command using execvp() system call
-		//	If command does not conatain & (ampersand) at the end
-		//		invoke wait() system call in parent process.
 	}
 	return 0;
 }
