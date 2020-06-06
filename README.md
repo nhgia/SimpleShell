@@ -52,7 +52,7 @@ ping -i 5 -w 10 -W 10 google.com
 !!
 ```
 
-#### 3. Concurrence commands
+#### 3. Concurrent commands
 - Add an ampersand mark after the command with whitespace required.
 ```bash
 ping -i 5 -w 10 -W 10 google.com &
