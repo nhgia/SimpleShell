@@ -5,11 +5,12 @@
  **/
 
 #include <stdio.h>
-#include <unistd.h>
+#include <unistd.h> // fork
 #include <string.h>
-#include <stdlib.h> //calloc
-#include <sys/types.h>
-#include <sys/wait.h>
+#include <stdlib.h> // exit
+#include <sys/types.h> // pid_t
+#include <sys/wait.h> // wait
+#include <fcntl.h> // open
 
 // For clear screen
 #ifdef _WIN32
@@ -96,6 +97,30 @@ int findPipe(char **args)
 	if (args[count] != NULL)
 		//Found
 		return 1;
+	return 0;
+}
+
+int findIORedirect(char **args)
+{
+	// Find ">" or "<" symbol
+	// Define: Return 0 - Not found
+	//         Return 1 - Found ">" OUTPUT
+	//         Return 2 - Found "<" INPUT
+	int count = 0;
+	while (args[count] != NULL && strcmp(args[count], ">") != 0 && strcmp(args[count], "<") != 0)
+		count++;
+
+	if (args[count] != NULL) {
+		if (strcmp(args[count], ">") == 0)
+			//Found ">"
+			return 1;
+		else if (strcmp(args[count], "<") == 0)
+			//Found "<"
+			return 2;
+		else
+			// Error handle
+			return 0;
+	};
 	return 0;
 }
 
@@ -195,32 +220,120 @@ void exec_w_Pipe(char **args)
 	}
 }
 
-void execute(char **args)
+void execute_w_io_redirect(int rType, char **args)
 {
+	// rType = 1: Output redirect
+	// rType = 2: Input redirect
+	
+	// Double check if rType is valid
+	if (rType <= 0)
+		return;
+
+	//Pre-process: Find argument after ">" or "<" symbol (file name)
+	char* fileName;
+	int countTemp = 0;
+	while (args[countTemp] != NULL && strcmp(args[countTemp], ">") != 0 && strcmp(args[countTemp], "<") != 0)
+		countTemp++;
+
+	if (args[countTemp] != NULL && args[countTemp + 1] != NULL)
+		if (strcmp(args[countTemp], ">") == 0 || strcmp(args[countTemp], "<") == 0)
+			fileName = args[countTemp + 1];
+		else
+			return;
+	else 
+		// Error
+		return;
+	if (fileName == NULL) // Cannot find filename
+		return;
+
+	// Remove ">", "<" and file name to fork child process
+	args[countTemp] = NULL;
+	args[countTemp + 1] = NULL;
+
 	pid_t pid;
 	int status;
+	if ((pid = fork()) < 0) // fork child process
+	{
+		printf("*** IOREDIRECT: forking child process failed.\n");
+		exit(1);
+	}
+	else if (pid == 0)
+	{
+		// Child process
+		switch (rType)
+        {
+            case 1:
+            {
+                // Output redirect
+                int destination = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+                dup2(destination, 1);
+                break;
+            }
+			case 2:
+            {
+                // Input redirect
+                int destination = open(fileName, O_RDONLY);
+                if (destination < 0)
+                {
+                    printf("*** IOREDIRECT: File not found.\n");
+                    exit(1);
+                }
+                dup2(destination, 0);
+                break;
+            }
+            case 3:
+            {
+                // Error handle
+                printf("*** IOREDIRECT: Unexpected error.\n");
+                exit(1);
+                break;
+            }
+        }
 
+		if (execvp(*args, args) < 0)
+		{
+			printf("*** IOREDIRECT: Exec failed.\n");
+			exit(1);
+		}
+	}
+	else
+	{
+		while (pid != wait(&status))
+		{
+			printf("...\n");
+		};
+	}
+}
+
+void execute(char **args)
+{
 	int isPipe = findPipe(args);
 	int isConcurrence = findAmpersand(args);
+	int isIORedirect = findIORedirect(args);
 
 	if (isPipe == 1)
 	{
 		//Execute if find pipe
 		exec_w_Pipe(args);
 	}
+	else if (isIORedirect > 0) {
+		execute_w_io_redirect(isIORedirect, args);
+	}
 	else
 	{
+		pid_t pid;
+		int status;
 		//Single command
 		if ((pid = fork()) < 0) // fork child process
 		{
-			printf("*** ERROR: forking child process failed\n");
+			printf("*** ERROR: forking child process failed.\n");
 			exit(1);
 		}
 		else if (pid == 0)
 		{
 			if (execvp(*args, args) < 0)
 			{
-				printf("*** ERROR: Exec failed\n");
+				printf("*** ERROR: Exec failed.\n");
 				exit(1);
 			}
 		}
@@ -264,7 +377,7 @@ int main(void)
 		{
 			if (strcmp(prevCommand, "") == 0)
 			{
-				printf("No commands in history\n");
+				printf("No commands in history.\n");
 				continue;
 			}
 			strncpy(command, prevCommand, strlen(prevCommand) + 1);
