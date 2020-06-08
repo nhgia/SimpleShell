@@ -5,6 +5,8 @@
 
 **PROJECT #2**: Build a simple shell on Linux: Simple commands with child processes, IO redirect &amp; pipe.
 
+*(Checkout the #1 project [here](https://github.com/nhgia/RandomNumber-LinuxKernelModule))*
+
 #### Author:
 - 1751064 - Nguyen Hoang Gia 
 - 1751063 - Pham Bao Duy
